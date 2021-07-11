@@ -82,41 +82,6 @@ class ETrade:
             self.request_token, self.request_token_secret, params={"oauth_verifier": text_code}
         )
 
-    def connect(self) -> None:
-        self.key = input("Etrade consumer_key: ")
-        secret = getpass.getpass("Etrade consumer_secret: ")
-
-        oauth = OAuth1Service(
-            name="etrade",
-            consumer_key=self.key,
-            consumer_secret=secret,
-            request_token_url="https://api.etrade.com/oauth/request_token",
-            access_token_url="https://api.etrade.com/oauth/access_token",
-            authorize_url="https://us.etrade.com/e/t/etws/authorize?key={}&token={}",
-            base_url="https://api.etrade.com",
-        )
-
-        # Oauth 1 Leg 1
-        request_token, request_token_secret = oauth.get_request_token(
-            params={"oauth_callback": "oob", "format": "json"}
-        )
-
-        # Oauth 1 Leg 2
-        authorize_url = oauth.authorize_url.format(oauth.consumer_key, request_token)
-        webbrowser.open(authorize_url)
-        text_code = input("Please accept agreement and enter text code from browser: ")
-
-        # Oauth 1 Leg 3
-        self.session = oauth.get_auth_session(
-            request_token, request_token_secret, params={"oauth_verifier": text_code}
-        )
-
-        if not self.choose_account():
-            print("No valid accounts")
-            sys.exit(1)
-
-        self._connected = True
-
     def choose_account(self, account_id):
         url = f"{_BASE_URL}/v1/accounts/list.json"
         response = self.session.get(url)
@@ -157,6 +122,19 @@ class ETrade:
             return False
 
         return json.loads(response.content)
+
+    def positions(self) -> json:
+        url = f"{_BASE_URL}/v1/accounts/{self.selected_account}/portfolio.json"
+        response = self.session.get(url, header_auth=True)
+
+        if response.status_code != 200:
+            return None
+
+        content = json.loads(response.content)
+
+        print(content)
+
+        return response.content
 
     def quote(self, symbol: str, detail: QuoteDetail = None) -> json:
         if detail is None:
