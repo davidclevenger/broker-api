@@ -1,0 +1,161 @@
+{
+	"info": {
+		"_postman_id": "5ee8fe8c-1098-4041-9217-e61637f6237c",
+		"name": "broker-api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "health check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/health",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "new (etrade)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/new?broker=etrade",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"new"
+					],
+					"query": [
+						{
+							"key": "broker",
+							"value": "etrade"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ETrade OAuth1A part 1 (leg 1 + leg 2)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/etrade/oauth_part1?session_id=&token_key=&token_secret=",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"etrade",
+						"oauth_part1"
+					],
+					"query": [
+						{
+							"key": "session_id",
+							"value": ""
+						},
+						{
+							"key": "token_key",
+							"value": ""
+						},
+						{
+							"key": "token_secret",
+							"value": ""
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ETrade OAuth1A part 2 (leg 3)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/etrade/oauth_part2?session_id=&response_code=",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"etrade",
+						"oauth_part2"
+					],
+					"query": [
+						{
+							"key": "session_id",
+							"value": ""
+						},
+						{
+							"key": "response_code",
+							"value": ""
+						},
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "choose account",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{server}}/choose_account?session_id=&account_id=",
+					"host": [
+						"{{server}}"
+					],
+					"path": [
+						"choose_account"
+					],
+					"query": [
+						{
+							"key": "session_id",
+							"value": ""
+						},
+						{
+							"key": "account_id",
+							"value": ""
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

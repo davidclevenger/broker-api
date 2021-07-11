@@ -1,0 +1,16 @@
+certifi==2021.5.30
+chardet==4.0.0
+colorama==0.4.4
+commonmark==0.9.1
+falcon==3.0.1
+fastapi==0.66.0
+gunicorn==20.1.0
+idna==2.10
+pydantic==1.8.2
+Pygments==2.9.0
+rauth==0.7.3
+requests==2.25.1
+rich==10.4.0
+starlette==0.14.2
+typing-extensions==3.10.0.0
+urllib3==1.26.6

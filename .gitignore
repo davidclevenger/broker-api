@@ -1,0 +1,11 @@
+# workspace
+.idea
+
+# environment
+venv
+
+# build artifacts
+*.py[cod]
+
+# misc
+.DS_Store
