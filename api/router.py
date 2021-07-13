@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-@router.get("/new")
+@router.get("/new", tags=["auth"])
 def new_broker_instance(broker: str, resp: Response):
     obj = {
         "etrade": ETrade()
@@ -30,7 +30,7 @@ def new_broker_instance(broker: str, resp: Response):
 
     return {"session_id": session_id}
 
-@router.get("/choose_account")
+@router.get("/choose_account", tags=["auth"])
 def choose_account(session_id: str, account_id: str, resp: Response):
     broker: ETrade = None
     if (broker := globals.SESSIONS.get(session_id, None)) is None:
@@ -48,7 +48,31 @@ def choose_account(session_id: str, account_id: str, resp: Response):
     resp.status_code = status.HTTP_200_OK
     return resp
 
-@router.get("/positions")
+@router.get("/account_value", tags=["account"])
+def account_value(session_id: str, resp: Response):
+    if (broker := globals.SESSIONS.get(session_id, None)) is None:
+        resp.status_code = status.HTTP_404_NOT_FOUND
+        resp.content = "session not found"
+        return resp
+
+    value = broker.account_value()
+    resp.status_code = status.HTTP_200_OK
+    resp.content = value
+    return resp
+
+@router.get("/cash_available", tags=["account"])
+def cash_available(session_id: str, resp: Response):
+    if (broker := globals.SESSIONS.get(session_id, None)) is None:
+        resp.status_code = status.HTTP_404_NOT_FOUND
+        resp.content = "session not found"
+        return resp
+
+    cash = broker.cash_available()
+    resp.status_code = status.HTTP_200_OK
+    resp.content = cash
+    return resp
+
+@router.get("/positions", tags=["account"])
 def positions(session_id: str, resp: Response):
     if (broker := globals.SESSIONS.get(session_id, None)) is None:
         resp.status_code = status.HTTP_404_NOT_FOUND
@@ -65,7 +89,7 @@ def positions(session_id: str, resp: Response):
     resp.content = positionz
     return resp
 
-@router.get("/order_target")
+@router.get("/order_target", tags=["order"])
 def order_target(session_id: str, target: Target, resp: Response):
     if (broker := globals.SESSIONS.get(session_id, None)) is None:
         resp.status_code = status.HTTP_404_NOT_FOUND
@@ -81,7 +105,7 @@ def order_target(session_id: str, target: Target, resp: Response):
     resp.status_code = status.HTTP_200_OK
     resp.content = result
 
-@router.get("/order_target_portfolio")
+@router.get("/order_target_portfolio", tags=["order"])
 def order_target_porfolio(session_id: str, target_portfolio: TargetPortfolio, resp: Response):
     if (broker := globals.SESSIONS.get(session_id, None)) is None:
         resp.status_code = status.HTTP_404_NOT_FOUND
@@ -101,9 +125,8 @@ def order_target_porfolio(session_id: str, target_portfolio: TargetPortfolio, re
 ETrade-specific Authorization (OAuth Core 1.0 Rev. A)
 """
 
-@router.get("/etrade/oauth_part1")
+@router.get("/etrade/oauth_part1", tags=["etrade"])
 def etrade_oauth_part1(session_id: str, token_key: str, token_secret: str, resp: Response):
-    broker: ETrade = None
     if (broker := globals.SESSIONS.get(session_id, None)) is None:
         resp.status_code = status.HTTP_404_NOT_FOUND
         resp.content = "session not found"
@@ -112,9 +135,8 @@ def etrade_oauth_part1(session_id: str, token_key: str, token_secret: str, resp:
     authorize_url = broker.oauth_part1(token_key, token_secret)
     return {"authorize_url": authorize_url}
 
-@router.get("/etrade/oauth_part2")
+@router.get("/etrade/oauth_part2", tags=["etrade"])
 def etrade_oauth_part2(session_id: str, response_code: str, resp: Response):
-    broker: ETrade = None
     if (broker := globals.SESSIONS.get(session_id, None)) is None:
         resp.status_code = status.HTTP_404_NOT_FOUND
         resp.content = "session not found"
