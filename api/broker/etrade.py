@@ -1,19 +1,18 @@
 from enum import Enum
-import getpass
-import webbrowser
 import json
 import logging
 import random
-import sys
-import falcon
 
 from rauth import OAuth1Service
+
+from broker import Broker
 
 logger = logging.getLogger(__name__)
 
 _BASE_URL = "https://api.etrade.com"
 
-class ETrade:
+
+class ETrade(Broker):
     # TODO add in remaining options
     class OrderType(Enum):
         EQUITY = "EQ"
@@ -108,7 +107,7 @@ class ETrade:
         self.selected_account = accounts[account_id]
         return True
 
-    def balance(self):
+    def cash_available(self):
         params = {"instType": "BROKERAGE", "realTimeNAV": "true"}
         headers = {"consumerkey": self.key}
 
@@ -121,7 +120,9 @@ class ETrade:
         if response.status_code != 200:
             return False
 
-        return json.loads(response.content)
+        resp = json.loads(response.content)
+
+        return resp["BalanceResponse"]["Computed"]["cashAvailableForInvestment"]
 
     def positions(self) -> json:
         url = f"{_BASE_URL}/v1/accounts/{self.selected_account}/portfolio.json"
@@ -250,27 +251,29 @@ class ETrade:
 
         return processed
 
-    def order_stock_target_portfolio(self):
+
+    def order(self):
         pass
 
-    def order_option(
-        self,
-        symbol: str,
-        quantity: int,
-        side,
-        strike: float,
-        option_type,
-        expiration: str,
-        limit_price: float = None,
-    ):
+    def order_target(self):
         pass
 
-    def order_option_target_portfolio(self):
+    def order_target_portfolio(self):
         pass
 
     def account_value(self) -> float:
-        # TODO
-        return 0.0
+        params = {"instType": "BROKERAGE", "realTimeNAV": "true"}
+        headers = {"consumerkey": self.key}
 
-    def cash_available(self) -> float:
-        return 0.0
+        url = f"{_BASE_URL}/v1/accounts/{self.selected_account}/balance.json"
+
+        response = self.session.get(
+            url, header_auth=True, params=params, headers=headers
+        )
+
+        if response.status_code != 200:
+            return False
+
+        resp = json.loads(response.content)
+
+        return resp["BalanceResponse"]["Computed"]["RealTimeValues"]["totalAccountValue"]

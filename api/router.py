@@ -3,6 +3,7 @@ import logging
 from typing import Dict
 
 from fastapi import APIRouter, Response, status
+from fastapi.responses import JSONResponse
 
 from broker.etrade import ETrade
 from models import Target, TargetPortfolio
@@ -56,9 +57,9 @@ def account_value(session_id: str, resp: Response):
         return resp
 
     value = broker.account_value()
-    resp.status_code = status.HTTP_200_OK
-    resp.content = value
-    return resp
+    # resp.status_code = status.HTTP_200_OK
+    # resp.content = value
+    return Response(content=str(value), status_code=status.HTTP_200_OK)
 
 @router.get("/cash_available", tags=["account"])
 def cash_available(session_id: str, resp: Response):
@@ -68,9 +69,9 @@ def cash_available(session_id: str, resp: Response):
         return resp
 
     cash = broker.cash_available()
-    resp.status_code = status.HTTP_200_OK
-    resp.content = cash
-    return resp
+    # resp.status_code = status.HTTP_200_OK
+    # resp.content = cash
+    return Response(content=str(cash), status_code=status.HTTP_200_OK)
 
 @router.get("/positions", tags=["account"])
 def positions(session_id: str, resp: Response):

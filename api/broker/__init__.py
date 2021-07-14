@@ -20,10 +20,13 @@ class Broker(ABC):
         pass
 
     @abstractmethod
+    def order(self):
+        pass
+
+    @abstractmethod
     def order_target(self, target: Target):
         pass
 
     @abstractmethod
     def order_target_portfolio(self, allocations: TargetPortfolio):
         pass
-
