@@ -2,9 +2,9 @@ import uuid
 import logging
 from typing import Dict
 
-from fastapi import APIRouter, Response, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
+from broker import Broker
 from broker.etrade import ETrade
 from models import Target, TargetPortfolio
 import globals
@@ -13,9 +13,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+def session_exists(session_id: str = Query(...)):
+    if session_id not in globals.SESSIONS:
+        raise HTTPException(status_code=404, detail="session not found!!!")
+
+
 @router.get("/new", tags=["auth"])
 def new_broker_instance(broker: str, resp: Response):
-    obj = {
+    obj: Broker = {
         "etrade": ETrade()
     }.get(broker, None)
 
@@ -31,14 +36,9 @@ def new_broker_instance(broker: str, resp: Response):
 
     return {"session_id": session_id}
 
-@router.get("/choose_account", tags=["auth"])
+@router.get("/choose_account", dependencies=[Depends(session_exists)], tags=["auth"])
 def choose_account(session_id: str, account_id: str, resp: Response):
-    broker: ETrade = None
-    if (broker := globals.SESSIONS.get(session_id, None)) is None:
-        resp.status_code = status.HTTP_404_NOT_FOUND
-        resp.content = "session not found"
-        return resp
-
+    broker: Broker = globals.SESSIONS[session_id]
     valid_account = broker.choose_account(account_id)
 
     if not valid_account:
@@ -49,37 +49,21 @@ def choose_account(session_id: str, account_id: str, resp: Response):
     resp.status_code = status.HTTP_200_OK
     return resp
 
-@router.get("/account_value", tags=["account"])
+@router.get("/account_value", dependencies=[Depends(session_exists)], tags=["account"])
 def account_value(session_id: str, resp: Response):
-    if (broker := globals.SESSIONS.get(session_id, None)) is None:
-        resp.status_code = status.HTTP_404_NOT_FOUND
-        resp.content = "session not found"
-        return resp
-
+    broker: Broker = globals.SESSIONS[session_id]
     value = broker.account_value()
-    # resp.status_code = status.HTTP_200_OK
-    # resp.content = value
     return Response(content=str(value), status_code=status.HTTP_200_OK)
 
-@router.get("/cash_available", tags=["account"])
+@router.get("/cash_available", dependencies=[Depends(session_exists)], tags=["account"])
 def cash_available(session_id: str, resp: Response):
-    if (broker := globals.SESSIONS.get(session_id, None)) is None:
-        resp.status_code = status.HTTP_404_NOT_FOUND
-        resp.content = "session not found"
-        return resp
-
+    broker: Broker = globals.SESSIONS[session_id]
     cash = broker.cash_available()
-    # resp.status_code = status.HTTP_200_OK
-    # resp.content = cash
     return Response(content=str(cash), status_code=status.HTTP_200_OK)
 
-@router.get("/positions", tags=["account"])
+@router.get("/positions", dependencies=[Depends(session_exists)], tags=["account"])
 def positions(session_id: str, resp: Response):
-    if (broker := globals.SESSIONS.get(session_id, None)) is None:
-        resp.status_code = status.HTTP_404_NOT_FOUND
-        resp.content = "session not found"
-        return resp
-
+    broker: Broker = globals.SESSIONS[session_id]
     positionz = broker.positions()
     if positionz is None:
         resp.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -90,13 +74,9 @@ def positions(session_id: str, resp: Response):
     resp.content = positionz
     return resp
 
-@router.get("/order_target", tags=["order"])
+@router.get("/order_target", dependencies=[Depends(session_exists)], tags=["order"])
 def order_target(session_id: str, target: Target, resp: Response):
-    if (broker := globals.SESSIONS.get(session_id, None)) is None:
-        resp.status_code = status.HTTP_404_NOT_FOUND
-        resp.content = "session not found"
-        return resp
-
+    broker: Broker = globals.SESSIONS[session_id]
     result = broker.order_target(target)
     if result is None:
         resp.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -106,13 +86,9 @@ def order_target(session_id: str, target: Target, resp: Response):
     resp.status_code = status.HTTP_200_OK
     resp.content = result
 
-@router.get("/order_target_portfolio", tags=["order"])
+@router.get("/order_target_portfolio", dependencies=[Depends(session_exists)], tags=["order"])
 def order_target_porfolio(session_id: str, target_portfolio: TargetPortfolio, resp: Response):
-    if (broker := globals.SESSIONS.get(session_id, None)) is None:
-        resp.status_code = status.HTTP_404_NOT_FOUND
-        resp.content = "session not found"
-        return resp
-
+    broker: Broker = globals.SESSIONS[session_id]
     result = broker.order_target_portfolio(target_portfolio)
     if result is None:
         resp.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -126,24 +102,14 @@ def order_target_porfolio(session_id: str, target_portfolio: TargetPortfolio, re
 ETrade-specific Authorization (OAuth Core 1.0 Rev. A)
 """
 
-@router.get("/etrade/oauth_part1", tags=["etrade"])
+@router.get("/etrade/oauth_part1", dependencies=[Depends(session_exists)], tags=["etrade"])
 def etrade_oauth_part1(session_id: str, token_key: str, token_secret: str, resp: Response):
-    if (broker := globals.SESSIONS.get(session_id, None)) is None:
-        resp.status_code = status.HTTP_404_NOT_FOUND
-        resp.content = "session not found"
-        return resp
-
+    broker: Broker = globals.SESSIONS[session_id]
     authorize_url = broker.oauth_part1(token_key, token_secret)
     return {"authorize_url": authorize_url}
 
-@router.get("/etrade/oauth_part2", tags=["etrade"])
+@router.get("/etrade/oauth_part2", dependencies=[Depends(session_exists)], tags=["etrade"])
 def etrade_oauth_part2(session_id: str, response_code: str, resp: Response):
-    if (broker := globals.SESSIONS.get(session_id, None)) is None:
-        resp.status_code = status.HTTP_404_NOT_FOUND
-        resp.content = "session not found"
-        return resp
-
+    broker: Broker = globals.SESSIONS[session_id]
     broker.oauth_part2(response_code)
-    resp.status_code = status.HTTP_200_OK
-    resp.content = "Successfully established ETrade conneection"
-    return resp
+    return Response(status_code=status.HTTP_200_OK, content="Successfully established ETrade conneection")
